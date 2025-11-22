@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>管理パネル</title>
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    :root {
+        --bg-body: #f4f6f8;
+        --bg-sidebar: #1e293b;
+        --sidebar-width: 250px;
+        --accent-color: #3b82f6;
+        --accent-hover: #2563eb;
+        --text-main: #334155;
+        --text-sub: #64748b;
+        --card-radius: 12px;
+        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    body { background-color: var(--bg-body); font-family: 'Noto Sans JP', sans-serif; color: var(--text-main); font-size: 0.9rem; -webkit-font-smoothing: antialiased; }
+
+    /* Layout */
+    .app-container { display: flex; min-height: 100vh; }
+    .sidebar {
+        width: var(--sidebar-width); background: var(--bg-sidebar); color: #94a3b8;
+        position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000;
+        display: flex; flex-direction: column; padding: 1.5rem 1rem;
+        box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+    }
+    .sidebar-brand { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; display: flex; align-items: center; gap: 10px; padding-left: 0.5rem; }
+    .nav-header { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 1.5rem 0 0.5rem 0.8rem; }
+    .nav-link { color: inherit; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 4px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; font-weight: 500; }
+    .nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-link.active { background: var(--accent-color); color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+
+    .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 2rem; padding-bottom: 90px; width: 100%; }
+
+    /* Cards */
+    .card-panel { background: #fff; border-radius: var(--card-radius); border: none; box-shadow: var(--card-shadow); height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+    .panel-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+    .panel-title { font-weight: 700; font-size: 1rem; margin: 0; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .panel-body { padding: 1.5rem; flex: 1; }
+
+    /* Dashboard Stats */
+    .stat-card { background: #fff; padding: 1.25rem; border-radius: var(--card-radius); box-shadow: var(--card-shadow); display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(0,0,0,0.02); transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-label { font-size: 0.75rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.03em; }
+    .stat-value { font-size: 1.75rem; font-weight: 700; line-height: 1.2; color: #1e293b; margin-top: 4px; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+
+    /* Tables */
+    .table-responsive-custom { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table { margin-bottom: 0; }
+    .table thead th { background: #f8fafc; color: var(--text-sub); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    .table tbody td { padding: 1rem; vertical-align: middle; border-bottom: 1px solid #f1f5f9; color: var(--text-main); font-size: 0.9rem; }
+    .table-hover tbody tr:hover { background-color: #f8fafc; }
+    .clickable-row { cursor: pointer; transition: background 0.15s; }
+    
+    /* Chart */
+    .chart-wrapper { position: relative; width: 100%; }
+    @media (min-width: 992px) { .chart-wrapper { height: 280px; } }
+    @media (max-width: 991px) { .chart-wrapper { height: 220px; } }
+
+    /* Timeline */
+    .timeline { padding-left: 10px; border-left: 2px solid #e2e8f0; margin: 5px 0 0 5px; }
+    .t-item { position: relative; padding-left: 25px; margin-bottom: 20px; }
+    .t-item::before { content: ''; position: absolute; left: -7px; top: 5px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--accent-color); border-radius: 50%; box-shadow: 0 0 0 3px #fff; }
+    .t-date { font-size: 0.75rem; color: #94a3b8; font-weight: 500; margin-bottom: 2px; }
+    .t-text { font-size: 0.9rem; line-height: 1.4; }
+
+    /* Status Badge */
+    .status-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-badge.online { background: #dcfce7; color: #166534; }
+    .status-badge.offline { background: #f1f5f9; color: #64748b; }
+    .status-badge.ban { background: #fee2e2; color: #991b1b; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background-color: currentColor; }
+
+    /* Mobile Nav */
+    .bottom-nav { display: none; }
+    @media (max-width: 992px) {
+        .sidebar { display: none; }
+        .main-content { margin-left: 0; padding: 1rem; padding-bottom: 80px; }
+        .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: #fff; border-top: 1px solid #e2e8f0; z-index: 2000; justify-content: space-around; align-items: center; box-shadow: 0 -4px 10px rgba(0,0,0,0.03); }
+        .b-nav-item { flex: 1; text-align: center; color: #94a3b8; font-size: 0.65rem; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        .b-nav-item.active { color: var(--accent-color); font-weight: 700; }
+        .b-nav-item i { font-size: 1.3rem; margin-bottom: 3px; }
+    }
+    
+    /* Mobile Feedback Card */
+    .mobile-fb-card { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+
+    /* Loading & Login */
+    #loading { position: fixed; inset:0; background: rgba(255,255,255,0.85); backdrop-filter: blur(4px); z-index: 9999; display:none; justify-content: center; align-items: center; flex-direction: column; }
+    #login-screen { position: fixed; inset: 0; background: #f1f5f9; z-index: 3000; display: flex; justify-content: center; align-items: center; }
+    .login-box { background: #fff; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 90%; max-width: 360px; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+    <div class="fw-bold text-secondary">データを同期中...</div>
+</div>
+
+<!-- Login -->
+<div id="login-screen">
+    <div class="login-box">
+        <div class="mb-4"><i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i></div>
+        <h4 class="fw-bold mb-2">管理パネル</h4>
+        <p class="text-muted small mb-4">パスワードを入力してください</p>
+        <input type="password" id="loginPass" class="form-control form-control-lg text-center mb-3 bg-light border-0" placeholder="パスワード">
+        <button class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" onclick="manualLogin()">ログイン</button>
+        <div id="loginMsg" class="mt-3 text-danger small fw-bold"></div>
+    </div>
+</div>
+
+<!-- App -->
+<div class="app-container" id="app-main" style="display:none;">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand"><i class="bi bi-grid-fill text-primary"></i> 管理パネル</div>
+        
+        <div class="nav-header">メインメニュー</div>
+        <a class="nav-link active" onclick="switchTab('dashboard')"><i class="bi bi-speedometer2"></i> ダッシュボード</a>
+        <a class="nav-link" onclick="switchTab('users')"><i class="bi bi-people"></i> ユーザー管理</a>
+        <a class="nav-link" onclick="switchTab('feedback')"><i class="bi bi-chat-left-text"></i> フィードバック</a>
+        
+        <div class="nav-header">設定・管理</div>
+        <a class="nav-link" onclick="switchTab('notification')"><i class="bi bi-megaphone"></i> お知らせ設定</a>
+        <a class="nav-link" onclick="switchTab('survey')"><i class="bi bi-ui-checks"></i> アンケート設定</a>
+        
+        <div class="nav-header">コンテンツ管理</div>
+        <a class="nav-link" onclick="switchTab('updates')"><i class="bi bi-journal-album"></i> アップデート情報</a>
+        <a class="nav-link" onclick="switchTab('schedule')"><i class="bi bi-calendar-check"></i> 予定管理</a>
+
+        <div class="mt-auto pt-3 border-top border-secondary border-opacity-25">
+            <button class="btn btn-outline-secondary btn-sm w-100 text-light border-secondary" onclick="logout()">
+                <i class="bi bi-box-arrow-right me-2"></i>ログアウト
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="view-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold m-0 text-dark">ダッシュボード</h4>
+                    <small class="text-muted">システム全体の状況概要</small>
+                </div>
+                <span class="badge bg-white text-secondary border shadow-sm px-3 py-2" id="last-upd"><i class="bi bi-clock me-1"></i> Syncing...</span>
+            </div>
+            
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-xl-3">
+                    <div class="stat-card">
+                        <div><div class="stat-label">現在の接続</div><div class="stat-value text-success" id="d-online">-</div></div>
+                        <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-broadcast"></i></div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="stat-card">
+                        <div><div class="stat-label">総ユーザー数</div><div class="stat-value" id="d-users">-</div></div>
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-people-fill"></i></div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="stat-card">
+                        <div><div class="stat-label">フィードバック</div><div class="stat-value" id="d-feedbacks">-</div></div>
+                        <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-envelope-fill"></i></div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="stat-card">
+                        <div><div class="stat-label">アンケート回答</div><div class="stat-value" id="d-answers">-</div></div>
+                        <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-bar-chart-fill"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card-panel">
+                        <div class="panel-header"><div class="panel-title"><i class="bi bi-graph-up me-2 text-primary"></i>新規ユーザー推移 (直近6ヶ月)</div></div>
+                        <div class="panel-body"><div class="chart-wrapper"><canvas id="userChart"></canvas></div></div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card-panel h-100">
+                        <div class="panel-header">
+                            <div class="panel-title"><i class="bi bi-trophy me-2 text-warning"></i>今月の人気アプリ</div>
+                            <span class="badge bg-light text-dark border" id="rank-month">-月</span>
+                        </div>
+                        <div class="table-responsive-custom">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light"><tr><th class="ps-3">#</th><th>タイトル</th><th class="text-end pe-3">回数</th></tr></thead>
+                                <tbody id="d-ranking-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-panel">
+                <div class="panel-header"><div class="panel-title"><i class="bi bi-activity me-2 text-info"></i>最新アクティビティ</div></div>
+                <div class="panel-body"><div class="timeline" id="timeline-feed"></div></div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION -->
+        <div id="view-notification" class="view-section d-none">
+            <h4 class="fw-bold mb-4">お知らせ設定</h4>
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-7">
+                    <div class="card-panel">
+                        <div class="panel-body">
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                <div><h6 class="fw-bold mb-1">ポップアップ表示</h6><small class="text-muted">サイト訪問時にポップアップを表示します</small></div>
+                                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="n-active" style="width: 3em; height: 1.5em; cursor: pointer;"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold small text-secondary mb-1">お知らせタイトル</label>
+                                <input type="text" id="n-title" class="form-control" placeholder="例: メンテナンスのお知らせ">
+                            </div>
+                            <div class="mb-4">
+                                <label class="fw-bold small text-secondary mb-1">本文内容 (<span class="text-danger">#文字#</span>で赤色強調)</label>
+                                <textarea id="n-text" rows="6" class="form-control" placeholder="本文を入力..."></textarea>
+                            </div>
+                            <button class="btn btn-primary w-100 fw-bold py-2" onclick="saveNotify()">設定を保存して公開</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SURVEY -->
+        <div id="view-survey" class="view-section d-none">
+            <h4 class="fw-bold mb-4">アンケート設定</h4>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card-panel mb-4 h-auto">
+                        <div class="panel-header"><div class="panel-title">新規アンケート作成</div></div>
+                        <div class="panel-body">
+                            <div class="alert alert-warning border-0 small mb-3"><i class="bi bi-exclamation-triangle-fill me-1"></i> <strong>注意:</strong> 公開するとIDが更新され、全ユーザーに再表示されます。</div>
+                            <label class="small fw-bold text-secondary mb-1">質問文</label>
+                            <input type="text" id="sv-q" class="form-control mb-3" placeholder="例: サイトの使いやすさは？">
+                            <label class="small fw-bold text-secondary mb-1">選択肢 (カンマ区切り)</label>
+                            <input type="text" id="sv-o" class="form-control mb-4" placeholder="例: 使いやすい,普通,使いにくい">
+                            <button class="btn btn-dark w-100 fw-bold" onclick="pubSurvey()">公開する</button>
+                        </div>
+                    </div>
+                    <div class="card-panel h-auto">
+                        <div class="panel-header"><div class="panel-title">現在の設定</div></div>
+                        <div class="panel-body">
+                            <div class="small fw-bold text-muted mb-1">質問</div>
+                            <div id="sv-cur-q" class="mb-3 fw-bold fs-6">-</div>
+                            <div class="small fw-bold text-muted mb-1">選択肢</div>
+                            <div id="sv-cur-o" class="text-secondary small bg-light p-2 rounded">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card-panel h-100">
+                        <div class="panel-header"><div class="panel-title">集計結果・一斉送信</div></div>
+                        <div class="panel-body" id="sv-result-area"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USERS -->
+        <div id="view-users" class="view-section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold m-0">ユーザー管理</h4>
+                <span class="badge bg-white text-dark border px-3 py-2" id="u-total">0 Users</span>
+            </div>
+            <div class="card-panel p-3 mb-4 h-auto">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="u-search" class="form-control border-start-0 shadow-none" placeholder="ID, 名前, メモ, 回答内容で検索..." onkeyup="filterU()">
+                </div>
+            </div>
+            <div class="card-panel h-auto">
+                <div class="table-container">
+                    <table class="table table-hover align-middle mb-0 text-nowrap">
+                        <thead class="bg-light"><tr><th class="ps-4">状態</th><th>ID / 名前</th><th>最終アクセス</th><th>メモ</th><th class="text-end pe-4">詳細</th></tr></thead>
+                        <tbody id="u-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div id="view-feedback" class="view-section d-none">
+            <h4 class="fw-bold mb-3">フィードバック</h4>
+            
+            <!-- PC用テーブル -->
+            <div class="d-none d-lg-block card-panel h-auto">
+                <div class="table-container">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light"><tr><th class="ps-4">日時</th><th>ユーザー (ID / 名前)</th><th>種類</th><th>内容</th></tr></thead>
+                        <tbody id="fb-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- スマホ用リスト -->
+            <div class="d-lg-none" id="fb-mobile-list"></div>
+        </div>
+
+        <!-- UPDATES & SCHEDULE -->
+        <div id="view-updates" class="view-section d-none">
+            <h4 class="fw-bold mb-3">アップデート履歴</h4>
+            <div class="card-panel p-4 mb-4 h-auto bg-light border-0">
+                <h6 class="fw-bold mb-3">新規追加</h6>
+                <div class="row g-2">
+                    <div class="col-md-2"><input id="up-v" class="form-control form-control-sm" placeholder="Ver (v1.0)"></div>
+                    <div class="col-md-2"><input id="up-d" class="form-control form-control-sm" placeholder="日付"></div>
+                    <div class="col-md-4"><input id="up-t" class="form-control form-control-sm" placeholder="タイトル"></div>
+                    <div class="col-md-4"><input id="up-vid" class="form-control form-control-sm" placeholder="動画URL"></div>
+                    <div class="col-12"><textarea id="up-det" class="form-control form-control-sm" placeholder="詳細 (改行で箇条書き)"></textarea></div>
+                    <div class="col-12 text-end"><button class="btn btn-dark btn-sm px-4" onclick="addUp()">リストに追加</button></div>
+                </div>
+            </div>
+            <div class="card-panel h-auto">
+                <div class="table-responsive-custom">
+                    <table class="table table-hover mb-0 align-middle"><tbody id="up-body"></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-schedule" class="view-section d-none">
+            <h4 class="fw-bold mb-3">予定管理</h4>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card-panel p-4 h-auto">
+                        <h6 class="fw-bold mb-3">予定を追加</h6>
+                        <label class="small text-muted fw-bold">項目名</label><input id="sc-n" class="form-control mb-2">
+                        <label class="small text-muted fw-bold">日付</label><input id="sc-d" class="form-control mb-3">
+                        <button class="btn btn-dark w-100" onclick="addSc()">追加</button>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card-panel h-auto">
+                        <div class="table-responsive-custom">
+                            <table class="table table-hover mb-0 align-middle"><tbody id="sc-body"></tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Bottom Nav (Mobile) -->
+<div class="bottom-nav d-lg-none">
+    <a class="b-nav-item active" onclick="switchTab('dashboard', this)"><i class="bi bi-speedometer2"></i>ホーム</a>
+    <a class="b-nav-item" onclick="switchTab('users', this)"><i class="bi bi-people"></i>ユーザー</a>
+    <a class="b-nav-item" onclick="switchTab('feedback', this)"><i class="bi bi-chat-left-text"></i>受信箱</a>
+    <a class="b-nav-item" onclick="switchTab('survey', this)"><i class="bi bi-ui-checks"></i>投票</a>
+</div>
+
+<!-- User Detail Modal (Scrollable) -->
+<div class="modal fade" id="uModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body p-0">
+                <!-- Header -->
+                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center sticky-top">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width:48px; height:48px; font-size:1.2rem;" id="m-av">U</div>
+                        <div>
+                            <div class="small text-muted fw-bold">USER ID</div>
+                            <h5 class="fw-bold mb-0 text-dark" id="m-uid">User</h5>
+                            <div class="small text-secondary" id="m-aka">No Name</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                         <div id="m-status"></div>
+                         <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <!-- Stats Grid -->
+                    <div class="row g-4 mb-4 text-center">
+                        <div class="col-6 col-md-3 border-end">
+                            <small class="text-secondary fw-bold d-block" style="font-size:0.7rem">初回ログイン</small>
+                            <span class="fw-bold text-dark" id="m-first">-</span>
+                        </div>
+                        <div class="col-6 col-md-3 border-end d-none d-md-block">
+                            <small class="text-secondary fw-bold d-block" style="font-size:0.7rem">最終ログイン</small>
+                            <span class="fw-bold text-dark" id="m-last">-</span>
+                        </div>
+                        <div class="col-6 col-md-3 border-end">
+                            <small class="text-secondary fw-bold d-block" style="font-size:0.7rem">プレイ回数</small>
+                            <span class="fw-bold text-dark fs-5" id="m-plays">0</span>
+                        </div>
+                         <div class="col-6 col-md-3">
+                            <small class="text-secondary fw-bold d-block" style="font-size:0.7rem">BAN状態</small>
+                            <span id="m-ban-badge">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Info -->
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card bg-white border h-100 shadow-sm">
+                                <div class="card-header bg-white py-2 px-3 fw-bold small text-muted border-bottom">管理者設定</div>
+                                <div class="card-body p-3">
+                                    <label class="small fw-bold text-secondary mb-1">管理者メモ</label>
+                                    <input id="m-memo" class="form-control form-control-sm mb-3" placeholder="ユーザーに関するメモ...">
+                                    
+                                    <label class="small fw-bold text-secondary mb-1">アクセス制限 (BAN)</label>
+                                    <select id="m-ban" class="form-select form-select-sm mb-3">
+                                        <option value="FALSE">正常 (アクセス許可)</option>
+                                        <option value="TRUE">BAN (アクセス拒否)</option>
+                                    </select>
+                                    
+                                    <label class="small fw-bold text-secondary mb-1">個別メッセージ</label>
+                                    <input id="m-msg" class="form-control form-control-sm mb-3" placeholder="次回アクセス時に表示されます">
+                                    
+                                    <button class="btn btn-dark btn-sm w-100 fw-bold" onclick="saveU()">設定を保存</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-white border h-100 shadow-sm">
+                                <div class="card-header bg-white py-2 px-3 fw-bold small text-muted border-bottom">よく遊ぶゲーム (Top 5)</div>
+                                <ul class="list-group list-group-flush small" id="m-games"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold small border-bottom pb-2 text-secondary">最近のフィードバック</h6>
+                                <div class="bg-light p-3 rounded small mt-1" id="m-fb" style="max-height:100px; overflow-y:auto;">なし</div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold small border-bottom pb-2 text-secondary">最新のアンケート回答</h6>
+                                <div class="bg-light p-3 rounded small mt-1 fw-bold text-dark" id="m-sv">なし</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Send Modal -->
+<div class="modal fade" id="bModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 text-primary"><i class="bi bi-send-fill fs-1"></i></div>
+                <h5 class="fw-bold">一斉送信</h5>
+                <p class="small text-muted">回答「<span id="b-ans" class="fw-bold text-dark"></span>」を選択した<br><span id="b-cnt" class="fw-bold text-dark fs-5"></span> 名のユーザーに送信します。</p>
+                <input id="b-msg" class="form-control mb-3" placeholder="メッセージ内容を入力...">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light w-50" data-bs-dismiss="modal">キャンセル</button>
+                    <button class="btn btn-primary w-50 fw-bold" onclick="execBulk()">送信実行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API = "https://script.google.com/macros/s/AKfycbzJSO_Bq80Qc1UI8RNyKBJ2Az81QfFkqdO-0j9nLglrEkirg-69sxYfPdGMbq9l30AO/exec";
+let auth="", data=null, timer=null, curU=null, bulkIds=[];
+const loading=(s)=>document.getElementById("loading").style.display=s?"flex":"none";
+
+document.addEventListener("DOMContentLoaded",()=>{
+    const k=localStorage.getItem("admKey");
+    if(k){ auth=k; loading(true); fetchD().then(ok=>{ loading(false); if(ok)init(); else{ localStorage.removeItem("admKey"); document.getElementById("login-screen").style.display="flex"; } }); }
+    else document.getElementById("login-screen").style.display="flex";
+});
+
+function manualLogin(){
+    const p=document.getElementById("loginPass").value; if(!p)return;
+    auth=p; loading(true); fetchD().then(ok=>{ loading(false); if(ok){ localStorage.setItem("admKey",p); init(); } else document.getElementById("loginMsg").innerText="パスワードが違います"; });
+}
+
+function init(){
+    document.getElementById("login-screen").style.display="none";
+    document.getElementById("app-main").style.display="flex";
+    if(window.innerWidth<=992) document.querySelector(".bottom-nav").style.display="flex";
+    start();
+}
+function start(){ if(timer)clearInterval(timer); timer=setInterval(()=>{ if(!document.querySelector('.modal.show')) fetchD(); },15000); }
+
+async function fetchD(){
+    try{
+        const r=await fetch(API,{ method:"POST", body:JSON.stringify({ action:"adminGetData", payload:{ password:auth } }) });
+        const j=await r.json();
+        if(j.status==="success"){ data=j.data; render(); return true; }
+        return false;
+    }catch(e){ return false; }
+}
+
+function render(){
+    if(!data)return;
+    const now=Date.now(); const thres=10*60*1000;
+    
+    // Online Calc
+    let on=0; data.users.forEach(u=>{ if(u[2]&&now-new Date(u[2]).getTime()<thres)on++; });
+    document.getElementById("d-online").innerText=on;
+    document.getElementById("d-users").innerText=data.users.length;
+    document.getElementById("d-feedbacks").innerText=data.feedback.length;
+    document.getElementById("d-answers").innerText=data.surveyResponses.length;
+    document.getElementById("u-total").innerText=data.users.length+" Users";
+
+    const dt=new Date();
+    document.getElementById("last-upd").innerText = "最終更新: "+dt.getHours()+":"+String(dt.getMinutes()).padStart(2,'0');
+
+    renderChart();
+    renderRank();
+    renderTime();
+    
+    // Configs
+    document.getElementById("n-active").checked=(data.config.notificationActive==="TRUE");
+    document.getElementById("n-title").value=data.config.notificationTitle||"";
+    document.getElementById("n-text").value=(data.config.notificationText||"").replaceAll("<br>","\n");
+    
+    const q=data.config.surveyQuestion||"(未設定)";
+    document.getElementById("sv-cur-q").innerText=q;
+    document.getElementById("sv-cur-o").innerText=data.config.surveyOptions||"-";
+    renderSv(q);
+
+    // Lists
+    renderU(thres, now);
+    
+    // Feedback Logic (PC Table & Mobile Cards)
+    const fbBody = document.getElementById("fb-body"); fbBody.innerHTML="";
+    const fbMobile = document.getElementById("fb-mobile-list"); fbMobile.innerHTML="";
+    
+    [...data.feedback].reverse().forEach(f=>{
+        // f: Date, ID, Name, Type, Game, Rate, BanAppeal, Content
+        const uid=f[1], name=f[2];
+        const uObj = data.users.find(u=>u[0]===uid);
+        const uTime = uObj && uObj[2] ? new Date(uObj[2]).getTime() : 0;
+        const isOn = (now - uTime < thres);
+        
+        // PC Table Row
+        const tr=document.createElement("tr"); tr.className="clickable-row";
+        tr.onclick=()=>openU(uid, name, isOn);
+        tr.innerHTML=`
+            <td class="ps-4 text-muted small">${f[0].slice(5,16)}</td>
+            <td>
+                <div class="fw-bold text-dark">${name}</div>
+                <div class="small text-muted" style="font-size:0.75rem;">ID: ${uid}</div>
+            </td>
+            <td><span class='badge bg-light text-dark border'>${f[3]}</span></td>
+            <td class='text-wrap' style='max-width:300px'>${f[7]}</td>
+        `;
+        fbBody.appendChild(tr);
+
+        // Mobile Card
+        const div = document.createElement("div");
+        div.className = "mobile-fb-card";
+        div.onclick=()=>openU(uid, name, isOn);
+        div.innerHTML = `
+            <div class="d-flex justify-content-between mb-2">
+                <div class="fw-bold text-dark">${name}</div>
+                <div class="small text-muted">${f[0].slice(5,16)}</div>
+            </div>
+            <div class="small text-muted mb-2">ID: ${uid} <span class="badge bg-light text-dark border ms-2">${f[3]}</span></div>
+            <div class="text-dark bg-light p-2 rounded">${f[7]}</div>
+        `;
+        fbMobile.appendChild(div);
+    });
+
+    renderSimple("up-body", data.updates, (r,i)=>`<td><span class='fw-bold'>${r[0]}</span></td><td>${r[1]}</td><td>${r[2]}</td><td class='text-end'><button class='btn btn-link text-danger p-0' onclick='del("Updates",${i})'><i class='bi bi-trash'></i></button></td>`);
+    renderSimple("sc-body", data.schedule, (r,i)=>`<td><span class='fw-bold'>${r[0]}</span></td><td>${r[1]}</td><td class='text-end'><button class='btn btn-link text-danger p-0' onclick='del("Schedule",${i})'><i class='bi bi-trash'></i></button></td>`);
+}
+
+function renderChart(){
+    const ctx=document.getElementById('userChart').getContext('2d');
+    const lbs=[]; const d=new Date(); d.setDate(1); 
+    for(let i=5; i>=0; i--){
+        const temp=new Date(d); temp.setMonth(d.getMonth()-i);
+        lbs.push(`${temp.getFullYear()}-${String(temp.getMonth()+1).padStart(2,'0')}`);
+    }
+    const counts={};
+    data.users.forEach(u=>{ 
+        if(u[1]){
+            const yyyy=u[1].substring(0,4);
+            const mm=u[1].substring(5,7);
+            const k=`${yyyy}-${mm}`;
+            counts[k]=(counts[k]||0)+1;
+        }
+    });
+    const vals = lbs.map(k=>counts[k]||0);
+
+    if(window.myChart) window.myChart.destroy();
+    window.myChart = new Chart(ctx, {
+        type:'line',
+        data:{ labels:lbs, datasets:[{ label:'新規ユーザー', data:vals, borderColor:'#3b82f6', backgroundColor:'rgba(59,130,246,0.1)', fill:true, tension:0.3, pointRadius:4 }] },
+        options:{ maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1}, grid:{borderDash:[5,5]}}, x:{grid:{display:false}}} }
+    });
+}
+
+function renderRank(){
+    const now=new Date();
+    const checkY=now.getFullYear(); const checkM=now.getMonth()+1;
+    const cnt={};
+    data.playLogs.forEach(l=>{
+        const dStr = l[0].replace(/\//g, '-');
+        const d = new Date(dStr);
+        if(d.getFullYear()===checkY && (d.getMonth()+1)===checkM){
+            cnt[l[2]]=(cnt[l[2]]||0)+1;
+        }
+    });
+    const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const tb=document.getElementById("d-ranking-body"); tb.innerHTML="";
+    document.getElementById("rank-month").innerText = `${checkM}月`;
+    if(!s.length) tb.innerHTML="<tr><td colspan='3' class='text-center text-muted py-3'>データなし</td></tr>";
+    else s.forEach((x,i)=> tb.innerHTML+=`<tr><td class='ps-3 fw-bold text-secondary'>${i+1}</td><td>${x[0]}</td><td class='text-end pe-3 fw-bold'>${x[1]}</td></tr>`);
+}
+
+function renderTime(){
+    let feed=[];
+    data.users.forEach(u=>feed.push({t:new Date(u[1]).getTime(), type:"join", u:u[0], txt:"新規登録しました"}));
+    data.feedback.forEach(f=>feed.push({t:new Date(f[0]).getTime(), type:"fb", u:f[1], txt:`フィードバック: ${f[3]}`}));
+    data.playLogs.forEach(p=>feed.push({t:new Date(p[0]).getTime(), type:"play", u:p[1], txt:`ゲーム開始: ${p[2]}`}));
+    data.users.forEach(u=>{ if(u[2] && u[2]!==u[1]) feed.push({t:new Date(u[2]).getTime(), type:"login", u:u[0], txt:"最終アクセス更新"}); });
+
+    feed.sort((a,b)=>b.t-a.t);
+    const el=document.getElementById("timeline-feed"); el.innerHTML="";
+    feed.slice(0,15).forEach(x=>{
+        const d=new Date(x.t); const ds=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        let c="text-dark";
+        if(x.type==="join") c="text-success fw-bold";
+        if(x.type==="fb") c="text-warning fw-bold";
+        if(x.type==="play") c="text-primary";
+        el.innerHTML+=`<div class="t-item"><div class="t-date">${ds}</div><div class="t-text"><span class="${c}">${x.u}</span> <span class="text-secondary">${x.txt}</span></div></div>`;
+    });
+}
+
+function renderU(thres, now){
+    const tb=document.getElementById("u-tbody"); tb.innerHTML="";
+    const nMap={}; data.feedback.forEach(f=>nMap[f[1]]=f[2]);
+    const aMap={}; data.surveyResponses.forEach(s=>aMap[s[1]]=(aMap[s[1]]||"")+s[4]+" ");
+    
+    [...data.users].reverse().forEach(u=>{
+        const uid=u[0], memo=u[5]||"", name=nMap[uid]||"名無し";
+        const isBan=(String(u[3]).toUpperCase()==="TRUE");
+        const lastT=u[2]?new Date(u[2]).getTime():0;
+        const isOn=(lastT && now-lastT < thres);
+        const search=(uid+name+memo+(aMap[uid]||"")).toLowerCase();
+        
+        const status = isBan ? `<span class="status-badge ban">BAN</span>` : (isOn ? `<span class="status-badge online"><div class="dot"></div>オンライン</span>` : `<span class="status-badge offline">オフライン</span>`);
+        
+        const tr=document.createElement("tr"); tr.className="clickable-row user-row"; tr.dataset.s=search;
+        tr.onclick=()=>openU(uid, name, isOn);
+        tr.innerHTML=`
+            <td class="ps-4">${status}</td>
+            <td><div class="fw-bold text-dark">${name}</div><div class="small text-muted" style="font-size:0.75rem">${uid}</div></td>
+            <td class="small text-muted">${u[2]?u[2].slice(5,16):'-'}</td>
+            <td class="small text-secondary text-truncate" style="max-width:120px;">${memo}</td>
+            <td class="text-end pe-4"><button class="btn btn-light btn-sm border"><i class="bi bi-pencil"></i></button></td>
+        `;
+        tb.appendChild(tr);
+    });
+    filterU();
+}
+
+function filterU(){
+    const t=document.getElementById("u-search").value.toLowerCase();
+    document.querySelectorAll(".user-row").forEach(r=>r.style.display=r.dataset.s.includes(t)?"":"none");
+}
+
+function renderSv(q){
+    const el=document.getElementById("sv-result-area"); el.innerHTML="";
+    if(!q||q==="(未設定)"){ el.innerHTML="<div class='text-muted text-center p-4 bg-light rounded'>データがありません</div>"; return; }
+    
+    const cnt={}; const ids={}; let tot=0;
+    data.surveyResponses.forEach(r=>{ if(r[3]===q){ cnt[r[4]]=(cnt[r[4]]||0)+1; tot++; if(!ids[r[4]])ids[r[4]]=[]; ids[r[4]].push(r[1]); } });
+    
+    Object.keys(cnt).forEach(ans=>{
+        const p=Math.round(cnt[ans]/tot*100);
+        const div=document.createElement("div"); div.className="mb-4";
+        div.innerHTML=`
+            <div class="d-flex justify-content-between small fw-bold mb-1"><span class="text-dark">${ans}</span><span>${cnt[ans]}人 (${p}%)</span></div>
+            <div class="progress mb-2" style="height:8px; background:#f1f5f9;"><div class="progress-bar bg-primary" style="width:${p}%"></div></div>
+            <button class="btn btn-outline-secondary btn-sm py-1 px-3" style="font-size:0.75rem" onclick="bulk('${ans}',${cnt[ans]})"><i class="bi bi-send me-1"></i> メッセージ送信</button>
+        `;
+        div.querySelector("button").onclick=()=>bulk(ans,cnt[ans],ids[ans]);
+        el.appendChild(div);
+    });
+}
+
+function renderSimple(id, arr, fn){
+    const el=document.getElementById(id); el.innerHTML="";
+    arr.forEach((r,i)=>{ const tr=document.createElement("tr"); tr.innerHTML=fn(r,i); el.appendChild(tr); });
+}
+
+async function post(a,p){ loading(true); p.password=auth; try{ await fetch(API,{method:"POST",body:JSON.stringify({action:a,payload:p})}); await fetchD(); }catch(e){} loading(false); }
+
+function openU(uid, name, isOn){
+    curU=uid; const u=data.users.find(x=>x[0]===uid);
+    document.getElementById("m-uid").innerText=uid; document.getElementById("m-aka").innerText=name;
+    document.getElementById("m-av").innerText=name.charAt(0);
+    
+    document.getElementById("m-status").innerHTML = (String(u[3]).toUpperCase()==="TRUE") 
+        ? '<span class="status-badge ban fs-6">BAN中</span>' 
+        : (isOn?'<span class="status-badge online fs-6"><div class="dot"></div>オンライン</span>':'<span class="status-badge offline fs-6">オフライン</span>');
+    
+    document.getElementById("m-first").innerText = u[1] ? u[1].slice(0,16) : "-";
+    document.getElementById("m-last").innerText = u[2] ? u[2].slice(0,16) : "-";
+    document.getElementById("m-ban-badge").innerText = (String(u[3]).toUpperCase()==="TRUE") ? "制限あり" : "正常";
+    
+    document.getElementById("m-memo").value = u[5]||"";
+    document.getElementById("m-ban").value = (String(u[3]).toUpperCase()==="TRUE")?"TRUE":"FALSE";
+    document.getElementById("m-msg").value = u[4]||"";
+
+    const logs=data.playLogs.filter(l=>l[1]===uid);
+    document.getElementById("m-plays").innerText = logs.length;
+    const cnt={}; logs.forEach(l=>cnt[l[2]]=(cnt[l[2]]||0)+1);
+    const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const gl=document.getElementById("m-games"); gl.innerHTML="";
+    s.forEach(x=>gl.innerHTML+=`<li class="list-group-item d-flex justify-content-between px-0 py-2 border-0 border-bottom bg-transparent"><span>${x[0]}</span><span class="fw-bold">${x[1]}回</span></li>`);
+    if(!s.length) gl.innerHTML="<li class='list-group-item px-0 border-0 bg-transparent text-muted'>履歴なし</li>";
+
+    const sv=data.surveyResponses.filter(r=>r[1]===uid).pop();
+    document.getElementById("m-sv").innerHTML = sv ? `Q.${sv[3]}<br><div class="text-primary mt-1">A. ${sv[4]}</div>` : "回答なし";
+    
+    const fbs=data.feedback.filter(f=>f[1]===uid);
+    const fbDiv=document.getElementById("m-fb"); fbDiv.innerHTML="";
+    fbs.reverse().slice(0,5).forEach(f=>fbDiv.innerHTML+=`<div class="border-bottom pb-2 mb-2">${f[7]} <span class="text-muted ms-2" style="font-size:0.7rem">${f[0].slice(5,10)}</span></div>`);
+    if(!fbs.length) fbDiv.innerText="履歴なし";
+
+    new bootstrap.Modal(document.getElementById('uModal')).show();
+}
+
+function saveU(){ post("adminUpdateUser",{userId:curU, banStatus:document.getElementById("m-ban").value, message:document.getElementById("m-msg").value, memo:document.getElementById("m-memo").value}); bootstrap.Modal.getInstance(document.getElementById('uModal')).hide(); }
+
+function bulk(a,c,i){ document.getElementById("b-ans").innerText=a; document.getElementById("b-cnt").innerText=c; bulkIds=i; new bootstrap.Modal(document.getElementById('bModal')).show(); }
+function execBulk(){ const m=document.getElementById("b-msg").value; if(m){ post("adminBulkMessage",{targetUserIds:bulkIds, message:m}); bootstrap.Modal.getInstance(document.getElementById('bModal')).hide(); document.getElementById("b-msg").value=""; } }
+
+function saveNotify(){ const a=document.getElementById("n-active").checked?"TRUE":"FALSE"; const t=document.getElementById("n-title").value; const x=document.getElementById("n-text").value.replaceAll("\n","<br>"); post("adminSaveConfigBatch",{data:{notificationActive:a, notificationTitle:t, notificationText:x}}); alert("保存しました"); }
+function pubSurvey(){ const q=document.getElementById("sv-q").value; const o=document.getElementById("sv-o").value; if(q&&confirm("公開しますか？")){ post("adminSaveConfigBatch",{data:{surveyId:"survey_"+Date.now(), surveyQuestion:q, surveyOptions:o}}); alert("公開しました"); } }
+function addUp(){ const p={version:document.getElementById("up-v").value, date:document.getElementById("up-d").value, title:document.getElementById("up-t").value, details:document.getElementById("up-det").value, videoUrl:document.getElementById("up-vid").value}; if(p.version) post("adminAddUpdate",p); }
+function addSc(){ const p={name:document.getElementById("sc-n").value, date:document.getElementById("sc-d").value}; if(p.name) post("adminAddSchedule",p); }
+function del(s,i){ if(confirm("削除？")) post("adminDeleteRow",{sheetName:s, rowIndex:i}); }
+
+function switchTab(id,el){ document.querySelectorAll(".view-section").forEach(d=>d.classList.add("d-none")); document.getElementById("view-"+id).classList.remove("d-none"); document.querySelectorAll(".nav-link").forEach(l=>l.classList.remove("active")); const s=document.querySelector(`.sidebar .nav-link[onclick*='${id}']`); if(s)s.classList.add("active"); if(el){ document.querySelectorAll(".b-nav-item").forEach(x=>x.classList.remove("active")); el.classList.add("active"); } }
+function logout(){ if(confirm("ログアウトしますか？")){ localStorage.removeItem("admKey"); location.reload(); } }
+</script>
+</body>
+</html>
