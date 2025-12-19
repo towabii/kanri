@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>管理パネル</title>
+<title>管理パネル - 拡張版</title>
 
 <style>
     /* --- CSS Reset & Base --- */
@@ -44,7 +44,7 @@
     .p-3 { padding: 1rem; }
     .p-4 { padding: 1.5rem; }
 
-    /* --- Grid System (Simplified) --- */
+    /* --- Grid System --- */
     .row { display: flex; flex-wrap: wrap; margin: -10px; }
     .col { flex: 1; padding: 10px; }
     .col-3 { width: 25%; padding: 10px; }
@@ -63,11 +63,11 @@
     /* --- Components --- */
     .app-container { display: flex; min-height: 100vh; }
     
-    /* Sidebar */
     .sidebar {
         width: var(--sidebar-width); background: var(--bg-sidebar); color: #94a3b8;
         position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000;
         display: flex; flex-direction: column; padding: 1.5rem 1rem;
+        overflow-y: auto;
     }
     .sidebar-brand { font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; }
     .nav-header { font-size: 0.75rem; text-transform: uppercase; color: #64748b; margin: 1.5rem 0 0.5rem 0.5rem; font-weight: bold; }
@@ -78,18 +78,15 @@
     .nav-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
     .nav-link.active { background: var(--accent-color); color: #fff; }
 
-    /* Main Content */
     .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 2rem; width: 100%; }
 
-    /* Cards */
     .card-panel {
         background: #fff; border-radius: var(--card-radius); box-shadow: var(--card-shadow);
-        height: 100%; overflow: hidden; display: flex; flex-direction: column;
+        height: 100%; overflow: hidden; display: flex; flex-direction: column; margin-bottom: 20px;
     }
     .panel-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
     .panel-body { padding: 1.5rem; flex: 1; }
 
-    /* Stats */
     .stat-card {
         background: #fff; padding: 1.25rem; border-radius: var(--card-radius);
         box-shadow: var(--card-shadow); display: flex; justify-content: space-between; align-items: center;
@@ -97,14 +94,12 @@
     .stat-val { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
     .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--text-sub); text-transform: uppercase; }
 
-    /* Forms */
     .form-control, .form-select {
         width: 100%; padding: 0.6rem 0.8rem; font-size: 0.9rem;
         border: 1px solid #ced4da; border-radius: 6px; transition: 0.2s; margin-bottom: 0.5rem;
     }
     .form-control:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
     
-    /* Buttons */
     .btn {
         display: inline-block; padding: 0.6rem 1.2rem; border-radius: 6px; border: none;
         cursor: pointer; font-size: 0.9rem; font-weight: 500; text-align: center; transition: 0.2s;
@@ -114,22 +109,18 @@
     .btn-outline { background: transparent; border: 1px solid #ccc; color: var(--text-main); }
     .btn-dark { background: #1e293b; color: white; }
     .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-    .w-100 { width: 100%; }
 
-    /* Tables */
     .table-container { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th { background: #f8fafc; color: var(--text-sub); font-weight: 600; padding: 0.8rem; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; white-space: nowrap;}
     td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
     tr:hover td { background-color: #f8fafc; cursor: pointer; }
 
-    /* Badges */
     .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid #eee; }
     .badge.online { background: #dcfce7; color: #166534; }
     .badge.offline { background: #f1f5f9; color: #64748b; }
     .badge.ban { background: #fee2e2; color: #991b1b; }
 
-    /* Mobile Nav */
     .bottom-nav {
         display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
         background: #fff; border-top: 1px solid var(--border-color); z-index: 2000;
@@ -139,7 +130,6 @@
     .b-nav-item.active { color: var(--accent-color); font-weight: bold; }
     .b-nav-icon { display: block; font-size: 1.2rem; margin-bottom: 2px; }
 
-    /* Modal */
     .modal-overlay {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
         z-index: 3000; justify-content: center; align-items: center;
@@ -153,14 +143,12 @@
     .modal-body { padding: 1.5rem; overflow-y: auto; }
     .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; line-height: 1; }
 
-    /* Login & Loading */
     #loading { position: fixed; inset:0; background: rgba(255,255,255,0.9); z-index: 9999; display:none; justify-content: center; align-items: center; flex-direction: column; }
     #login-screen { position: fixed; inset: 0; background: #f1f5f9; z-index: 3000; display: flex; justify-content: center; align-items: center; }
     .login-box { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 300px; text-align: center; }
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Custom Chart */
     canvas { width: 100% !important; height: 250px !important; }
     .timeline-item { padding-left: 15px; border-left: 2px solid #e2e8f0; margin-left: 5px; padding-bottom: 15px; position: relative; }
     .timeline-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; background: #fff; border: 2px solid var(--accent-color); border-radius: 50%; }
@@ -169,13 +157,11 @@
 </head>
 <body>
 
-<!-- Loading -->
 <div id="loading">
     <div class="spinner"></div>
     <div style="font-weight:bold; color:#666;">データを同期中...</div>
 </div>
 
-<!-- Login -->
 <div id="login-screen">
     <div class="login-box">
         <div style="font-size:3rem; margin-bottom:1rem;">🛡️</div>
@@ -187,7 +173,6 @@
     </div>
 </div>
 
-<!-- App -->
 <div class="app-container" id="app-main" style="display:none;">
 
     <!-- Sidebar -->
@@ -197,13 +182,15 @@
         <div class="nav-header">メインメニュー</div>
         <a class="nav-link active" onclick="switchTab('dashboard')">🏠 ダッシュボード</a>
         <a class="nav-link" onclick="switchTab('users')">👥 ユーザー管理</a>
-        <a class="nav-link" onclick="switchTab('feedback')">💬 フィードバック</a>
+        <a class="nav-link" onclick="switchTab('activity')">⚡ 全アクティビティ</a>
+
+        <div class="nav-header">集計・ランキング</div>
+        <a class="nav-link" onclick="switchTab('rank-history')">🏆 月別ランキング</a>
+        <a class="nav-link" onclick="switchTab('survey-history')">📝 アンケート履歴</a>
 
         <div class="nav-header">設定・管理</div>
         <a class="nav-link" onclick="switchTab('notification')">📢 お知らせ設定</a>
-        <a class="nav-link" onclick="switchTab('survey')">📝 アンケート設定</a>
-
-        <div class="nav-header">コンテンツ</div>
+        <a class="nav-link" onclick="switchTab('feedback')">💬 フィードバック</a>
         <a class="nav-link" onclick="switchTab('updates')">🔄 アップデート</a>
         <a class="nav-link" onclick="switchTab('schedule')">📅 予定管理</a>
 
@@ -226,51 +213,28 @@
             </div>
             
             <div class="row mb-4">
-                <div class="col-3">
-                    <div class="stat-card">
-                        <div><div class="stat-label">現在の接続</div><div class="stat-val text-primary" id="d-online">-</div></div>
-                        <div style="font-size:1.5rem">📡</div>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="stat-card">
-                        <div><div class="stat-label">総ユーザー</div><div class="stat-val" id="d-users">-</div></div>
-                        <div style="font-size:1.5rem">👥</div>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="stat-card">
-                        <div><div class="stat-label">受信箱</div><div class="stat-val" id="d-feedbacks">-</div></div>
-                        <div style="font-size:1.5rem">📩</div>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="stat-card">
-                        <div><div class="stat-label">回答数</div><div class="stat-val" id="d-answers">-</div></div>
-                        <div style="font-size:1.5rem">📊</div>
-                    </div>
-                </div>
+                <div class="col-3"><div class="stat-card"><div><div class="stat-label">現在の接続</div><div class="stat-val text-primary" id="d-online">-</div></div><div style="font-size:1.5rem">📡</div></div></div>
+                <div class="col-3"><div class="stat-card"><div><div class="stat-label">総ユーザー</div><div class="stat-val" id="d-users">-</div></div><div style="font-size:1.5rem">👥</div></div></div>
+                <div class="col-3"><div class="stat-card"><div><div class="stat-label">受信箱</div><div class="stat-val" id="d-feedbacks">-</div></div><div style="font-size:1.5rem">📩</div></div></div>
+                <div class="col-3"><div class="stat-card"><div><div class="stat-label">回答数</div><div class="stat-val" id="d-answers">-</div></div><div style="font-size:1.5rem">📊</div></div></div>
             </div>
 
             <div class="row mb-4">
                 <div class="col-6" style="flex:2;">
                     <div class="card-panel">
                         <div class="panel-header">📈 新規ユーザー推移 (直近6ヶ月)</div>
-                        <div class="panel-body">
-                            <!-- 簡易Canvasチャート -->
-                            <canvas id="userChart"></canvas>
-                        </div>
+                        <div class="panel-body"><canvas id="userChart"></canvas></div>
                     </div>
                 </div>
                 <div class="col-6" style="flex:1;">
                     <div class="card-panel">
                         <div class="panel-header">
-                            <span>🏆 人気アプリ</span>
+                            <span>🏆 今月の人気アプリ</span>
                             <span class="badge" id="rank-month">-月</span>
                         </div>
                         <div class="table-container">
                             <table class="table">
-                                <thead style="background:#f8fafc"><tr><th>#</th><th>タイトル</th><th class="text-end">回数</th></tr></thead>
+                                <thead><tr><th>#</th><th>タイトル</th><th class="text-end">回数</th></tr></thead>
                                 <tbody id="d-ranking-body"></tbody>
                             </table>
                         </div>
@@ -279,68 +243,82 @@
             </div>
 
             <div class="card-panel">
-                <div class="panel-header">⚡ 最新アクティビティ</div>
+                <div class="panel-header">
+                    <span>⚡ 最新アクティビティ</span>
+                    <button class="btn btn-sm btn-outline" onclick="switchTab('activity')">すべて見る</button>
+                </div>
                 <div class="panel-body" id="timeline-feed"></div>
+            </div>
+        </div>
+
+        <!-- ACTIVITY FULL -->
+        <div id="view-activity" class="view-section d-none">
+            <h2 class="fw-bold mb-4">全アクティビティ履歴</h2>
+            <div class="card-panel">
+                <div class="panel-body" id="timeline-full" style="max-height: 70vh; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <!-- RANK HISTORY -->
+        <div id="view-rank-history" class="view-section d-none">
+            <div class="d-flex justify-between align-center mb-4">
+                <h2 class="fw-bold">月別ランキング</h2>
+                <select id="rank-selector" class="form-select" style="width: 200px;" onchange="renderRankHistory()"></select>
+            </div>
+            <div class="card-panel">
+                <div class="table-container">
+                    <table class="table">
+                        <thead><tr><th>順位</th><th>アプリ名</th><th class="text-end">プレイ回数</th></tr></thead>
+                        <tbody id="rank-history-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- NOTIFICATION -->
         <div id="view-notification" class="view-section d-none">
             <h2 class="fw-bold mb-4">お知らせ設定</h2>
-            <div class="row" style="justify-content: center;">
-                <div class="col-12" style="max-width: 800px;">
-                    <div class="card-panel">
-                        <div class="panel-body">
-                            <div class="d-flex justify-between align-center mb-4" style="border-bottom:1px solid #eee; padding-bottom:1rem;">
-                                <div><h4 class="fw-bold">ポップアップ表示</h4><small class="text-muted">訪問時に表示する</small></div>
-                                <input type="checkbox" id="n-active" style="width:20px; height:20px;">
-                            </div>
-                            <div class="mb-3">
-                                <label class="fw-bold mb-2 d-block">タイトル</label>
-                                <input type="text" id="n-title" class="form-control" placeholder="例: メンテナンスのお知らせ">
-                            </div>
-                            <div class="mb-4">
-                                <label class="fw-bold mb-2 d-block">本文 (<span class="text-danger">#文字#</span>で赤色強調)</label>
-                                <textarea id="n-text" rows="6" class="form-control" placeholder="本文..."></textarea>
-                            </div>
-                            <button class="btn btn-primary w-100" onclick="saveNotify()">設定を保存して公開</button>
-                        </div>
+            <div class="card-panel" style="max-width: 800px; margin: 0 auto;">
+                <div class="panel-body">
+                    <div class="d-flex justify-between align-center mb-4" style="border-bottom:1px solid #eee; padding-bottom:1rem;">
+                        <div><h4 class="fw-bold">ポップアップ表示</h4><small class="text-muted">訪問時に表示する</small></div>
+                        <input type="checkbox" id="n-active" style="width:24px; height:24px;">
                     </div>
+                    <div class="mb-3">
+                        <label class="fw-bold mb-2 d-block">タイトル</label>
+                        <input type="text" id="n-title" class="form-control" placeholder="例: メンテナンスのお知らせ">
+                    </div>
+                    <div class="mb-4">
+                        <label class="fw-bold mb-2 d-block">本文 (<span class="text-danger">#文字#</span>で赤色強調)</label>
+                        <textarea id="n-text" rows="8" class="form-control" placeholder="本文..."></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="saveNotify()">設定を保存して公開</button>
                 </div>
             </div>
         </div>
 
-        <!-- SURVEY -->
-        <div id="view-survey" class="view-section d-none">
-            <h2 class="fw-bold mb-4">アンケート設定</h2>
+        <!-- SURVEY HISTORY -->
+        <div id="view-survey-history" class="view-section d-none">
+            <h2 class="fw-bold mb-4">アンケート履歴と集計</h2>
             <div class="row">
-                <div class="col-6">
-                    <div class="card-panel mb-3">
-                        <div class="panel-header">新規作成</div>
+                <div class="col-12">
+                    <div class="card-panel mb-4">
+                        <div class="panel-header">現在のアンケート作成・変更</div>
                         <div class="panel-body">
-                            <div class="mb-3 text-danger" style="font-size:0.85rem;">⚠️ 公開すると以前の結果はリセットされます</div>
-                            <label class="fw-bold mb-2 d-block">質問文</label>
-                            <input type="text" id="sv-q" class="form-control mb-3" placeholder="例: サイトの使いやすさは？">
-                            <label class="fw-bold mb-2 d-block">選択肢 (カンマ区切り)</label>
-                            <input type="text" id="sv-o" class="form-control mb-4" placeholder="例: 良い,普通,悪い">
-                            <button class="btn btn-dark w-100" onclick="pubSurvey()">公開する</button>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="fw-bold mb-2 d-block">質問文</label>
+                                    <input type="text" id="sv-q" class="form-control" placeholder="例: サイトの使いやすさは？">
+                                </div>
+                                <div class="col-6">
+                                    <label class="fw-bold mb-2 d-block">選択肢 (カンマ区切り)</label>
+                                    <input type="text" id="sv-o" class="form-control" placeholder="例: 良い,普通,悪い">
+                                </div>
+                            </div>
+                            <button class="btn btn-dark w-100 mt-3" onclick="pubSurvey()">新規アンケートを公開 (以前の結果をアーカイブ)</button>
                         </div>
                     </div>
-                    <div class="card-panel">
-                        <div class="panel-header">現在の設定</div>
-                        <div class="panel-body">
-                            <div class="text-muted mb-1">質問:</div>
-                            <div id="sv-cur-q" class="fw-bold mb-3">-</div>
-                            <div class="text-muted mb-1">選択肢:</div>
-                            <div id="sv-cur-o" class="badge bg-light" style="display:inline-block">-</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card-panel h-100">
-                        <div class="panel-header">集計結果</div>
-                        <div class="panel-body" id="sv-result-area"></div>
-                    </div>
+                    <div id="survey-history-list"></div>
                 </div>
             </div>
         </div>
@@ -364,20 +342,11 @@
             </div>
         </div>
 
-        <!-- FEEDBACK -->
+        <!-- FEEDBACK, UPDATES, SCHEDULE (Same as original) -->
         <div id="view-feedback" class="view-section d-none">
             <h2 class="fw-bold mb-3">フィードバック</h2>
-            <div class="card-panel">
-                <div class="table-container">
-                    <table class="table">
-                        <thead><tr><th>日時</th><th>ユーザー</th><th>種類</th><th>内容</th></tr></thead>
-                        <tbody id="fb-body"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="card-panel"><div class="table-container"><table class="table"><thead><tr><th>日時</th><th>ユーザー</th><th>種類</th><th>内容</th></tr></thead><tbody id="fb-body"></tbody></table></div></div>
         </div>
-
-        <!-- UPDATES & SCHEDULE -->
         <div id="view-updates" class="view-section d-none">
             <h2 class="fw-bold mb-3">アップデート情報</h2>
             <div class="card-panel p-4 mb-4">
@@ -391,103 +360,50 @@
                 <textarea id="up-det" class="form-control" placeholder="詳細 (改行で箇条書き)"></textarea>
                 <button class="btn btn-dark w-100 mt-3" onclick="addUp()">リストに追加</button>
             </div>
-            <div class="card-panel">
-                <div class="table-container">
-                    <table class="table"><tbody id="up-body"></tbody></table>
-                </div>
-            </div>
+            <div class="card-panel"><div class="table-container"><table class="table"><tbody id="up-body"></tbody></table></div></div>
         </div>
-
         <div id="view-schedule" class="view-section d-none">
             <h2 class="fw-bold mb-3">予定管理</h2>
             <div class="row">
-                <div class="col-6">
-                    <div class="card-panel p-4">
-                        <h4 class="fw-bold mb-3">予定を追加</h4>
-                        <label>項目名</label><input id="sc-n" class="form-control">
-                        <label>日付</label><input id="sc-d" class="form-control">
-                        <button class="btn btn-dark w-100 mt-3" onclick="addSc()">追加</button>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="card-panel">
-                        <table class="table"><tbody id="sc-body"></tbody></table>
-                    </div>
-                </div>
+                <div class="col-6"><div class="card-panel p-4"><h4 class="fw-bold mb-3">予定を追加</h4><label>項目名</label><input id="sc-n" class="form-control"><label>日付</label><input id="sc-d" class="form-control"><button class="btn btn-dark w-100 mt-3" onclick="addSc()">追加</button></div></div>
+                <div class="col-6"><div class="card-panel"><table class="table"><tbody id="sc-body"></tbody></table></div></div>
             </div>
         </div>
-
     </div>
 </div>
 
 <!-- Bottom Nav (Mobile) -->
 <div class="bottom-nav">
-    <div class="b-nav-item active" onclick="switchTab('dashboard', this)"><span class="b-nav-icon">🏠</span>ホーム</div>
-    <div class="b-nav-item" onclick="switchTab('users', this)"><span class="b-nav-icon">👥</span>ユーザー</div>
-    <div class="b-nav-item" onclick="switchTab('feedback', this)"><span class="b-nav-icon">💬</span>受信箱</div>
-    <div class="b-nav-item" onclick="switchTab('survey', this)"><span class="b-nav-icon">📝</span>投票</div>
+    <div class="b-nav-item active" onclick="switchTab('dashboard', this)"><span class="b-nav-icon">🏠</span></div>
+    <div class="b-nav-item" onclick="switchTab('users', this)"><span class="b-nav-icon">👥</span></div>
+    <div class="b-nav-item" onclick="switchTab('activity', this)"><span class="b-nav-icon">⚡</span></div>
+    <div class="b-nav-item" onclick="switchTab('rank-history', this)"><span class="b-nav-icon">🏆</span></div>
 </div>
 
 <!-- Modal: User Detail -->
 <div class="modal-overlay" id="uModal">
     <div class="modal-box">
-        <div class="modal-header">
-            <div class="fw-bold">ユーザー詳細</div>
-            <button class="close-btn" onclick="closeModal('uModal')">×</button>
-        </div>
+        <div class="modal-header"><div class="fw-bold">ユーザー詳細</div><button class="close-btn" onclick="closeModal('uModal')">×</button></div>
         <div class="modal-body">
             <div class="d-flex align-center gap-3 mb-4">
                 <div style="width:50px; height:50px; background:var(--accent-color); color:white; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;" id="m-av">U</div>
-                <div>
-                    <div class="fw-bold" style="font-size:1.1rem;" id="m-uid">ID</div>
-                    <div class="text-muted" id="m-aka">No Name</div>
+                <div style="flex:1">
+                    <div class="text-muted" style="font-size:0.7rem;" id="m-uid">ID</div>
+                    <input type="text" id="m-name-input" class="form-control mb-0" style="font-weight:bold; font-size:1.1rem" placeholder="名前を入力">
                 </div>
-                <div id="m-status" style="margin-left:auto;"></div>
+                <div id="m-status"></div>
             </div>
-
             <div class="row text-center mb-4" style="background:#f8fafc; padding:10px; border-radius:8px;">
-                <div class="col">
-                    <small class="text-muted d-block">初回</small>
-                    <strong id="m-first">-</strong>
-                </div>
-                <div class="col">
-                    <small class="text-muted d-block">プレイ回数</small>
-                    <strong id="m-plays">0</strong>
-                </div>
-                <div class="col">
-                    <small class="text-muted d-block">状態</small>
-                    <strong id="m-ban-badge">-</strong>
-                </div>
+                <div class="col"><small class="text-muted d-block">初回</small><strong id="m-first">-</strong></div>
+                <div class="col"><small class="text-muted d-block">プレイ回数</small><strong id="m-plays">0</strong></div>
+                <div class="col"><small class="text-muted d-block">状態</small><strong id="m-ban-badge">-</strong></div>
             </div>
-
-            <div class="mb-3">
-                <label class="fw-bold mb-1 d-block">管理者メモ</label>
-                <input id="m-memo" class="form-control" placeholder="メモ...">
-            </div>
-            <div class="mb-3">
-                <label class="fw-bold mb-1 d-block">BAN設定 (アクセス拒否)</label>
-                <select id="m-ban" class="form-select">
-                    <option value="FALSE">正常 (アクセス許可)</option>
-                    <option value="TRUE">BAN (アクセス拒否)</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="fw-bold mb-1 d-block">個別メッセージ</label>
-                <input id="m-msg" class="form-control" placeholder="次回アクセス時に表示">
-            </div>
-            <button class="btn btn-dark w-100 mb-4" onclick="saveU()">設定を保存</button>
-
-            <hr class="mb-3">
-            <div class="row">
-                <div class="col-6">
-                    <h5 class="fw-bold mb-2">よく遊ぶゲーム</h5>
-                    <ul id="m-games" style="list-style:none; padding:0; font-size:0.9rem;"></ul>
-                </div>
-                <div class="col-6">
-                    <h5 class="fw-bold mb-2">フィードバック履歴</h5>
-                    <div id="m-fb" style="font-size:0.8rem; color:#555;"></div>
-                </div>
-            </div>
+            <div class="mb-3"><label class="fw-bold mb-1 d-block">管理者メモ</label><input id="m-memo" class="form-control"></div>
+            <div class="mb-3"><label class="fw-bold mb-1 d-block">BAN設定</label><select id="m-ban" class="form-select"><option value="FALSE">正常</option><option value="TRUE">BAN</option></select></div>
+            <div class="mb-4"><label class="fw-bold mb-1 d-block">個別メッセージ</label><input id="m-msg" class="form-control"></div>
+            <button class="btn btn-dark w-100" onclick="saveU()">保存する</button>
+            <hr class="my-4" style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <div class="row"><div class="col-6"><h5 class="fw-bold mb-2">よく遊ぶ</h5><ul id="m-games" style="list-style:none; padding:0; font-size:0.8rem;"></ul></div><div class="col-6"><h5 class="fw-bold mb-2">FB履歴</h5><div id="m-fb" style="font-size:0.75rem; color:#555;"></div></div></div>
         </div>
     </div>
 </div>
@@ -495,21 +411,11 @@
 <!-- Modal: Bulk Send -->
 <div class="modal-overlay" id="bModal">
     <div class="modal-box" style="max-width:400px;">
-        <div class="modal-header">
-            <div class="fw-bold">一斉送信</div>
-            <button class="close-btn" onclick="closeModal('bModal')">×</button>
-        </div>
+        <div class="modal-header"><div class="fw-bold">一斉送信</div><button class="close-btn" onclick="closeModal('bModal')">×</button></div>
         <div class="modal-body text-center">
-            <div style="font-size:2rem; margin-bottom:1rem;">📨</div>
-            <p class="mb-3">
-                回答「<strong id="b-ans"></strong>」の<br>
-                <strong id="b-cnt" style="font-size:1.2rem;"></strong> 名にメッセージを送信します。
-            </p>
-            <input id="b-msg" class="form-control mb-3" placeholder="メッセージ内容...">
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline w-100" onclick="closeModal('bModal')">キャンセル</button>
-                <button class="btn btn-primary w-100" onclick="execBulk()">送信</button>
-            </div>
+            <p class="mb-3">回答「<strong id="b-ans"></strong>」の<strong id="b-cnt"></strong>名に送信</p>
+            <input id="b-msg" class="form-control mb-3" placeholder="メッセージ...">
+            <div class="d-flex gap-2"><button class="btn btn-outline w-100" onclick="closeModal('bModal')">中止</button><button class="btn btn-primary w-100" onclick="execBulk()">送信</button></div>
         </div>
     </div>
 </div>
@@ -530,22 +436,27 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 function manualLogin(){
     const p=document.getElementById("loginPass").value; if(!p)return;
-    auth=p; loading(true); fetchD().then(ok=>{ loading(false); if(ok){ localStorage.setItem("admKey",p); init(); } else document.getElementById("loginMsg").innerText="パスワードが違います"; });
+    auth=p; loading(true); fetchD().then(ok=>{ loading(false); if(ok){ localStorage.setItem("admKey",p); init(); } else document.getElementById("loginMsg").innerText="パスワード不備"; });
 }
 
 function init(){
     document.getElementById("login-screen").style.display="none";
     document.getElementById("app-main").style.display="flex";
-    if(window.innerWidth<=992) document.querySelector(".bottom-nav").style.display="flex";
     start();
 }
-function start(){ if(timer)clearInterval(timer); timer=setInterval(()=>{ if(!document.querySelector('.modal-overlay.active')) fetchD(); },15000); }
+function start(){ if(timer)clearInterval(timer); timer=setInterval(()=>{ if(!document.querySelector('.modal-overlay.active')) fetchD(); },20000); }
 
 async function fetchD(){
     try{
         const r=await fetch(API,{ method:"POST", body:JSON.stringify({ action:"adminGetData", payload:{ password:auth } }) });
         const j=await r.json();
-        if(j.status==="success"){ data=j.data; render(); return true; }
+        if(j.status==="success"){ 
+            data=j.data; 
+            render(); 
+            // 初回表示時のみセレクター作成
+            if(!document.getElementById("rank-selector").options.length) setupRankSelector();
+            return true; 
+        }
         return false;
     }catch(e){ console.error(e); return false; }
 }
@@ -554,7 +465,7 @@ function render(){
     if(!data)return;
     const now=Date.now(); const thres=10*60*1000;
     
-    // Stats
+    // 基本統計
     let on=0; data.users.forEach(u=>{ if(u[2]&&now-new Date(u[2]).getTime()<thres)on++; });
     document.getElementById("d-online").innerText=on;
     document.getElementById("d-users").innerText=data.users.length;
@@ -564,44 +475,39 @@ function render(){
     const dt=new Date();
     document.getElementById("last-upd").innerText = dt.getHours()+":"+String(dt.getMinutes()).padStart(2,'0');
 
-    drawSimpleChart();
-    renderRank();
-    renderTime();
+    // グラフレンダリング
+    setTimeout(drawSimpleChart, 100); 
     
-    // Configs
+    // 各ページ更新
+    renderRank();
+    renderRankHistory();
+    renderTime();
+    renderSurveyHistory();
+    renderU(thres, now);
+    
+    // お知らせ設定同期
     document.getElementById("n-active").checked=(data.config.notificationActive==="TRUE");
     document.getElementById("n-title").value=data.config.notificationTitle||"";
     document.getElementById("n-text").value=(data.config.notificationText||"").replaceAll("<br>","\n");
-    const q=data.config.surveyQuestion||"(未設定)";
-    document.getElementById("sv-cur-q").innerText=q;
-    document.getElementById("sv-cur-o").innerText=data.config.surveyOptions||"-";
-    renderSv(q);
 
-    // Users & Feed
-    renderU(thres, now);
+    // FB / Updates / Schedule
     const fbBody = document.getElementById("fb-body"); fbBody.innerHTML="";
     [...data.feedback].reverse().forEach(f=>{
-        const uid=f[1], name=f[2];
-        const uObj = data.users.find(u=>u[0]===uid);
-        const isOn = uObj && uObj[2] ? (now - new Date(uObj[2]).getTime() < thres) : false;
-        const tr=document.createElement("tr"); 
-        tr.onclick=()=>openU(uid, name, isOn);
-        tr.innerHTML=`<td class="text-muted">${f[0].slice(5,16)}</td><td><strong>${name}</strong><br><small>${uid}</small></td><td><span class='badge'>${f[3]}</span></td><td>${f[7]}</td>`;
-        fbBody.appendChild(tr);
+        fbBody.innerHTML+=`<tr><td class="text-muted">${f[0].slice(5,16)}</td><td><strong>${f[2]}</strong><br><small>${f[1]}</small></td><td><span class='badge'>${f[3]}</span></td><td>${f[7]}</td></tr>`;
     });
-
-    renderSimple("up-body", data.updates, (r,i)=>`<td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td class='text-end'><button class='btn btn-outline text-danger' onclick='del("Updates",${i})'>削除</button></td>`);
-    renderSimple("sc-body", data.schedule, (r,i)=>`<td><strong>${r[0]}</strong></td><td>${r[1]}</td><td class='text-end'><button class='btn btn-outline text-danger' onclick='del("Schedule",${i})'>削除</button></td>`);
+    renderSimple("up-body", data.updates, (r,i)=>`<td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td class='text-end'><button class='btn btn-outline text-danger' onclick='del("Updates",${i})'>消去</button></td>`);
+    renderSimple("sc-body", data.schedule, (r,i)=>`<td><strong>${r[0]}</strong></td><td>${r[1]}</td><td class='text-end'><button class='btn btn-outline text-danger' onclick='del("Schedule",${i})'>消去</button></td>`);
 }
 
-// Custom Chart (Canvas) - Replaces Chart.js
+// グラフ描画修正
 function drawSimpleChart(){
     const canvas = document.getElementById('userChart');
+    if(!canvas || canvas.offsetParent === null) return; // 表示されていない時は描画しない
+
     const ctx = canvas.getContext('2d');
     const width = canvas.width = canvas.offsetWidth;
     const height = canvas.height = canvas.offsetHeight;
     
-    // Data Prep
     const counts={}; const d=new Date(); d.setDate(1); 
     const labels=[]; 
     for(let i=5; i>=0; i--){
@@ -610,44 +516,53 @@ function drawSimpleChart(){
     }
     data.users.forEach(u=>{ 
         if(u[1]){
-            const k=u[1].substring(0,7); // YYYY-MM
+            const dateStr = String(u[1]);
+            const k = dateStr.substring(0,7).replace(/\//g, "-");
             counts[k]=(counts[k]||0)+1;
         }
     });
     const values = labels.map(k=>counts[k]||0);
     const maxVal = Math.max(...values, 5);
 
-    // Draw
     ctx.clearRect(0,0,width,height);
-    const padL=30, padB=30;
-    const chartW = width-padL; const chartH = height-padB;
+    const padL=40, padB=30, padT=20, padR=20;
+    const chartW = width-padL-padR; const chartH = height-padB-padT;
 
-    // Grid
-    ctx.strokeStyle="#e2e8f0"; ctx.lineWidth=1; ctx.beginPath();
-    ctx.moveTo(padL,0); ctx.lineTo(padL,chartH); ctx.lineTo(width,chartH);
-    ctx.stroke();
+    // 背景グリッド
+    ctx.strokeStyle="#f1f5f9"; ctx.lineWidth=1;
+    for(let i=0; i<=4; i++){
+        let y = padT + (chartH/4)*i;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(width-padR, y); ctx.stroke();
+    }
 
-    // Plot Line
-    ctx.strokeStyle="#3b82f6"; ctx.lineWidth=3; ctx.beginPath();
+    // ライン描画
+    ctx.strokeStyle="#3b82f6"; ctx.lineWidth=3; ctx.lineJoin="round"; ctx.beginPath();
     const stepX = chartW / (labels.length-1);
     values.forEach((v,i)=>{
         const x = padL + i*stepX;
-        const y = chartH - (v/maxVal)*chartH;
+        const y = padT + chartH - (v/maxVal)*chartH;
         if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        // Draw Dot
-        ctx.fillStyle="#3b82f6"; ctx.fillRect(x-3, y-3, 6, 6);
     });
     ctx.stroke();
 
-    // Labels
-    ctx.fillStyle="#64748b"; ctx.font="10px Arial"; ctx.textAlign="center";
-    labels.forEach((l,i)=>{ ctx.fillText(l.slice(5), padL + i*stepX, height-10); });
+    // ドットとラベル
+    ctx.fillStyle="#3b82f6";
+    values.forEach((v,i)=>{
+        const x = padL + i*stepX;
+        const y = padT + chartH - (v/maxVal)*chartH;
+        ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#64748b"; ctx.font="10px Arial"; ctx.textAlign="center";
+        ctx.fillText(labels[i].split("-")[1]+"月", x, height-10);
+        ctx.textAlign="right";
+        if(i===0) ctx.fillText(v, x-5, y);
+    });
 }
 
+// ランキング関連
 function renderRank(){
     const now=new Date(); const checkY=now.getFullYear(); const checkM=now.getMonth()+1;
     const cnt={}; data.playLogs.forEach(l=>{
-        const d = new Date(l[0].replace(/\//g, '-'));
+        const d = new Date(String(l[0]).replace(/\//g, '-'));
         if(d.getFullYear()===checkY && (d.getMonth()+1)===checkM) cnt[l[2]]=(cnt[l[2]]||0)+1;
     });
     const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
@@ -657,71 +572,78 @@ function renderRank(){
     else s.forEach((x,i)=> tb.innerHTML+=`<tr><td class='fw-bold'>${i+1}</td><td>${x[0]}</td><td class='text-end'>${x[1]}</td></tr>`);
 }
 
+function setupRankSelector(){
+    const sel = document.getElementById("rank-selector");
+    const months = [];
+    const now = new Date();
+    for(let i=0; i<12; i++){
+        const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const opt = new Option(`${d.getFullYear()}年 ${d.getMonth()+1}月`, val);
+        sel.add(opt);
+    }
+}
+
+function renderRankHistory(){
+    const target = document.getElementById("rank-selector").value;
+    if(!target || !data) return;
+    const [ty, tm] = target.split("-").map(Number);
+    const cnt={};
+    data.playLogs.forEach(l=>{
+        const d = new Date(String(l[0]).replace(/\//g, '-'));
+        if(d.getFullYear()===ty && (d.getMonth()+1)===tm) cnt[l[2]]=(cnt[l[2]]||0)+1;
+    });
+    const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    const tb=document.getElementById("rank-history-body"); tb.innerHTML="";
+    if(!s.length) tb.innerHTML="<tr><td colspan='3' class='text-center p-4'>この月のデータはありません</td></tr>";
+    else s.forEach((x,i)=> tb.innerHTML+=`<tr><td>${i+1}</td><td class="fw-bold">${x[0]}</td><td class="text-end">${x[1]}回</td></tr>`);
+}
+
+// アクティビティ
 function renderTime(){
     let feed=[];
-    data.users.forEach(u=>feed.push({t:new Date(u[1]).getTime(), u:u[0], txt:"新規登録"}));
-    data.feedback.forEach(f=>feed.push({t:new Date(f[0]).getTime(), u:f[1], txt:`FB: ${f[3]}`}));
-    data.playLogs.forEach(p=>feed.push({t:new Date(p[0]).getTime(), u:p[1], txt:`Game: ${p[2]}`}));
+    data.users.forEach(u=>feed.push({t:new Date(u[1]).getTime(), u:u[0], n:u[7]||"新規", txt:"登録"}));
+    data.feedback.forEach(f=>feed.push({t:new Date(f[0]).getTime(), u:f[1], n:f[2], txt:`FB: ${f[3]}`}));
+    data.playLogs.forEach(p=>feed.push({t:new Date(p[0]).getTime(), u:p[1], n:p[6]||p[1], txt:`Play: ${p[2]}`}));
     feed.sort((a,b)=>b.t-a.t);
-    const el=document.getElementById("timeline-feed"); el.innerHTML="";
-    feed.slice(0,10).forEach(x=>{
+    
+    const elDash = document.getElementById("timeline-feed"); elDash.innerHTML="";
+    const elFull = document.getElementById("timeline-full"); elFull.innerHTML="";
+    
+    feed.forEach((x, i)=>{
         const d=new Date(x.t);
-        el.innerHTML+=`<div class="timeline-item"><div class="text-muted" style="font-size:0.75rem">${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}</div><div><strong style="color:#333">${x.u}</strong> <span class="text-muted">${x.txt}</span></div></div>`;
+        const html = `<div class="timeline-item"><div class="text-muted" style="font-size:0.75rem">${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}</div><div><strong>${x.n}</strong> <small class="text-muted">(${x.u})</small> <span class="text-primary">${x.txt}</span></div></div>`;
+        if(i < 10) elDash.innerHTML += html;
+        elFull.innerHTML += html;
     });
 }
 
+// ユーザー管理
 function renderU(thres, now){
     const tb=document.getElementById("u-tbody"); tb.innerHTML="";
-    const nMap={}; data.feedback.forEach(f=>nMap[f[1]]=f[2]);
-    
     [...data.users].reverse().forEach(u=>{
-        const uid=u[0], memo=u[5]||"", name=nMap[uid]||"名無し";
+        const uid=u[0], name=u[7]||"名無し", memo=u[5]||"";
         const isBan=(String(u[3]).toUpperCase()==="TRUE");
         const isOn=(u[2] && now-new Date(u[2]).getTime() < thres);
-        const status = isBan ? `<span class="badge ban">BAN</span>` : (isOn ? `<span class="badge online">Online</span>` : `<span class="badge offline">Offline</span>`);
+        const status = isBan ? `<span class="badge ban">BAN</span>` : (isOn ? `<span class="badge online">ON</span>` : `<span class="badge offline">OFF</span>`);
         
         const tr=document.createElement("tr"); tr.className="user-row"; tr.dataset.s=(uid+name+memo).toLowerCase();
-        tr.onclick=()=>openU(uid, name, isOn);
-        tr.innerHTML=`<td>${status}</td><td><strong>${name}</strong><br><small>${uid}</small></td><td>${u[2]?u[2].slice(5,16):'-'}</td><td style="max-width:100px; overflow:hidden; white-space:nowrap;">${memo}</td><td class="text-end"><button class="btn btn-outline btn-sm">詳細</button></td>`;
+        tr.onclick=()=>openU(uid);
+        tr.innerHTML=`<td>${status}</td><td><strong>${name}</strong><br><small class="text-muted">${uid}</small></td><td>${u[2]?u[2].slice(5,16):'-'}</td><td class="text-muted">${memo}</td><td class="text-end"><button class="btn btn-outline btn-sm">詳細</button></td>`;
         tb.appendChild(tr);
     });
     filterU();
 }
 
-function filterU(){
-    const t=document.getElementById("u-search").value.toLowerCase();
-    document.querySelectorAll(".user-row").forEach(r=>r.style.display=r.dataset.s.includes(t)?"":"none");
-}
-
-function renderSv(q){
-    const el=document.getElementById("sv-result-area"); el.innerHTML="";
-    if(!q||q==="(未設定)"){ el.innerHTML="<div class='text-muted p-3'>データなし</div>"; return; }
-    const cnt={}; const ids={}; let tot=0;
-    data.surveyResponses.forEach(r=>{ if(r[3]===q){ cnt[r[4]]=(cnt[r[4]]||0)+1; tot++; if(!ids[r[4]])ids[r[4]]=[]; ids[r[4]].push(r[1]); } });
-    
-    Object.keys(cnt).forEach(ans=>{
-        const p=Math.round(cnt[ans]/tot*100);
-        const div=document.createElement("div"); div.className="mb-3";
-        div.innerHTML=`<div class="d-flex justify-between mb-1"><span>${ans}</span><span>${cnt[ans]} (${p}%)</span></div><div style="background:#f1f5f9; height:8px; border-radius:4px;"><div style="width:${p}%; background:#3b82f6; height:100%; border-radius:4px;"></div></div><button class="btn btn-outline btn-sm mt-2" onclick="bulk('${ans}',${cnt[ans]})">メッセージ送信</button>`;
-        div.querySelector("button").onclick=()=>bulk(ans,cnt[ans],ids[ans]);
-        el.appendChild(div);
-    });
-}
-
-function renderSimple(id, arr, fn){
-    const el=document.getElementById(id); el.innerHTML="";
-    arr.forEach((r,i)=>{ const tr=document.createElement("tr"); tr.innerHTML=fn(r,i); el.appendChild(tr); });
-}
-
-async function post(a,p){ loading(true); p.password=auth; try{ await fetch(API,{method:"POST",body:JSON.stringify({action:a,payload:p})}); await fetchD(); }catch(e){} loading(false); }
-
-function openU(uid, name, isOn){
+function openU(uid){
     curU=uid; const u=data.users.find(x=>x[0]===uid);
-    document.getElementById("m-uid").innerText=uid; document.getElementById("m-aka").innerText=name;
-    document.getElementById("m-av").innerText=name.charAt(0);
-    document.getElementById("m-status").innerHTML = (String(u[3]).toUpperCase()==="TRUE") ? '<span class="badge ban">BAN中</span>' : (isOn?'<span class="badge online">オンライン</span>':'<span class="badge offline">オフライン</span>');
-    document.getElementById("m-first").innerText = u[1] ? u[1].slice(0,10) : "-";
-    document.getElementById("m-ban-badge").innerText = (String(u[3]).toUpperCase()==="TRUE") ? "制限あり" : "正常";
+    document.getElementById("m-uid").innerText=uid;
+    document.getElementById("m-name-input").value=u[7]||"";
+    document.getElementById("m-av").innerText=(u[7]||"U").charAt(0);
+    const isOn = u[2] && (Date.now()-new Date(u[2]).getTime() < 600000);
+    document.getElementById("m-status").innerHTML = (String(u[3]).toUpperCase()==="TRUE") ? '<span class="badge ban">BAN</span>' : (isOn?'<span class="badge online">ONLINE</span>':'');
+    document.getElementById("m-first").innerText = u[1] ? String(u[1]).slice(0,10) : "-";
+    document.getElementById("m-ban-badge").innerText = (String(u[3]).toUpperCase()==="TRUE") ? "制限中" : "正常";
     document.getElementById("m-memo").value = u[5]||"";
     document.getElementById("m-ban").value = (String(u[3]).toUpperCase()==="TRUE")?"TRUE":"FALSE";
     document.getElementById("m-msg").value = u[4]||"";
@@ -731,24 +653,93 @@ function openU(uid, name, isOn){
     const cnt={}; logs.forEach(l=>cnt[l[2]]=(cnt[l[2]]||0)+1);
     const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
     const gl=document.getElementById("m-games"); gl.innerHTML="";
-    s.forEach(x=>gl.innerHTML+=`<li>${x[0]} (${x[1]}回)</li>`);
-
-    const fbs=data.feedback.filter(f=>f[1]===uid);
-    const fbDiv=document.getElementById("m-fb"); fbDiv.innerHTML="";
-    fbs.reverse().slice(0,5).forEach(f=>fbDiv.innerHTML+=`<div style="border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px;">${f[7]} <span class="text-muted" style="font-size:0.7rem">${f[0].slice(5,10)}</span></div>`);
+    s.forEach(x=>gl.innerHTML+=`<li>${x[0]} (${x[1]})</li>`);
 
     openModal('uModal');
 }
 
-function saveU(){ post("adminUpdateUser",{userId:curU, banStatus:document.getElementById("m-ban").value, message:document.getElementById("m-msg").value, memo:document.getElementById("m-memo").value}); closeModal('uModal'); }
-function bulk(a,c,i){ document.getElementById("b-ans").innerText=a; document.getElementById("b-cnt").innerText=c; bulkIds=i; openModal('bModal'); }
+// アンケート履歴
+function renderSurveyHistory(){
+    const list = document.getElementById("survey-history-list");
+    list.innerHTML = "";
+    
+    // 質問ごとにグループ化
+    const groups = {};
+    data.surveyResponses.forEach(r => {
+        const q = r[3];
+        if(!groups[q]) groups[q] = { question: q, options: [], results: {}, total: 0, ids: {} };
+        const ans = r[4];
+        groups[q].results[ans] = (groups[q].results[ans] || 0) + 1;
+        groups[q].total++;
+        if(!groups[q].ids[ans]) groups[q].ids[ans] = [];
+        groups[q].ids[ans].push(r[1]);
+    });
+
+    Object.values(groups).reverse().forEach(g => {
+        const card = document.createElement("div");
+        card.className = "card-panel";
+        let rowsHtml = "";
+        Object.keys(g.results).forEach(ans => {
+            const p = Math.round(g.results[ans] / g.total * 100);
+            rowsHtml += `<div class="mb-3">
+                <div class="d-flex justify-between mb-1"><span>${ans}</span><span>${g.results[ans]}票 (${p}%)</span></div>
+                <div style="background:#f1f5f9; height:8px; border-radius:4px;"><div style="width:${p}%; background:var(--accent-color); height:100%; border-radius:4px;"></div></div>
+                <button class="btn btn-outline btn-sm mt-2" onclick="bulk('${ans}',${g.results[ans]},'${JSON.stringify(g.ids[ans])}')">この回答者に送信</button>
+            </div>`;
+        });
+        card.innerHTML = `<div class="panel-header">質問: ${g.question} <small class="text-muted">合計 ${g.total} 票</small></div><div class="panel-body">${rowsHtml}</div>`;
+        list.appendChild(card);
+    });
+}
+
+// 各種アクション
+async function post(a,p){ loading(true); p.password=auth; try{ await fetch(API,{method:"POST",body:JSON.stringify({action:a,payload:p})}); await fetchD(); }catch(e){} loading(false); }
+
+function saveU(){ 
+    post("adminUpdateUser",{
+        userId:curU, 
+        banStatus:document.getElementById("m-ban").value, 
+        message:document.getElementById("m-msg").value, 
+        memo:document.getElementById("m-memo").value,
+        name:document.getElementById("m-name-input").value // 名前手動登録用
+    }); 
+    closeModal('uModal'); 
+}
+
+function saveNotify(){ 
+    const a=document.getElementById("n-active").checked?"TRUE":"FALSE"; 
+    const t=document.getElementById("n-title").value; 
+    const x=document.getElementById("n-text").value.replaceAll("\n","<br>"); 
+    post("adminSaveConfigBatch",{data:{notificationActive:a, notificationTitle:t, notificationText:x}}); 
+    alert("保存完了"); 
+}
+
+function pubSurvey(){ 
+    const q=document.getElementById("sv-q").value; 
+    const o=document.getElementById("sv-o").value; 
+    if(q && confirm("新しいアンケートを公開しますか？")){ 
+        post("adminSaveConfigBatch",{data:{surveyId:"survey_"+Date.now(), surveyQuestion:q, surveyOptions:o}}); 
+    } 
+}
+
+// 共通パーツ
+function filterU(){ const t=document.getElementById("u-search").value.toLowerCase(); document.querySelectorAll(".user-row").forEach(r=>r.style.display=r.dataset.s.includes(t)?"":"none"); }
+function bulk(a,c,idsJson){ document.getElementById("b-ans").innerText=a; document.getElementById("b-cnt").innerText=c; bulkIds=JSON.parse(idsJson); openModal('bModal'); }
 function execBulk(){ const m=document.getElementById("b-msg").value; if(m){ post("adminBulkMessage",{targetUserIds:bulkIds, message:m}); closeModal('bModal'); document.getElementById("b-msg").value=""; } }
-function saveNotify(){ const a=document.getElementById("n-active").checked?"TRUE":"FALSE"; const t=document.getElementById("n-title").value; const x=document.getElementById("n-text").value.replaceAll("\n","<br>"); post("adminSaveConfigBatch",{data:{notificationActive:a, notificationTitle:t, notificationText:x}}); alert("保存しました"); }
-function pubSurvey(){ const q=document.getElementById("sv-q").value; const o=document.getElementById("sv-o").value; if(q&&confirm("公開しますか？")){ post("adminSaveConfigBatch",{data:{surveyId:"survey_"+Date.now(), surveyQuestion:q, surveyOptions:o}}); alert("公開しました"); } }
 function addUp(){ const p={version:document.getElementById("up-v").value, date:document.getElementById("up-d").value, title:document.getElementById("up-t").value, details:document.getElementById("up-det").value, videoUrl:document.getElementById("up-vid").value}; if(p.version) post("adminAddUpdate",p); }
 function addSc(){ const p={name:document.getElementById("sc-n").value, date:document.getElementById("sc-d").value}; if(p.name) post("adminAddSchedule",p); }
-function del(s,i){ if(confirm("削除？")) post("adminDeleteRow",{sheetName:s, rowIndex:i}); }
-function switchTab(id,el){ document.querySelectorAll(".view-section").forEach(d=>d.classList.add("d-none")); document.getElementById("view-"+id).classList.remove("d-none"); document.querySelectorAll(".nav-link").forEach(l=>l.classList.remove("active")); const s=document.querySelector(`.sidebar .nav-link[onclick*='${id}']`); if(s)s.classList.add("active"); if(el){ document.querySelectorAll(".b-nav-item").forEach(x=>x.classList.remove("active")); el.classList.add("active"); } }
+function del(s,i){ if(confirm("消去しますか？")) post("adminDeleteRow",{sheetName:s, rowIndex:i}); }
+function renderSimple(id, arr, fn){ const el=document.getElementById(id); el.innerHTML=""; (arr||[]).forEach((r,i)=>{ const tr=document.createElement("tr"); tr.innerHTML=fn(r,i); el.appendChild(tr); }); }
+
+function switchTab(id,el){ 
+    document.querySelectorAll(".view-section").forEach(d=>d.classList.add("d-none")); 
+    document.getElementById("view-"+id).classList.remove("d-none"); 
+    document.querySelectorAll(".nav-link").forEach(l=>l.classList.remove("active")); 
+    const s=document.querySelector(`.sidebar .nav-link[onclick*='${id}']`); 
+    if(s)s.classList.add("active"); 
+    if(el){ document.querySelectorAll(".b-nav-item").forEach(x=>x.classList.remove("active")); el.classList.add("active"); }
+    if(id==='dashboard') setTimeout(drawSimpleChart, 200);
+}
 function logout(){ if(confirm("ログアウトしますか？")){ localStorage.removeItem("admKey"); location.reload(); } }
 </script>
 </body>
